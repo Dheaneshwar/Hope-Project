@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Travel-planner</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 400px; }
+  </style>
+</head>
+<body>
+  <h1>Leaflet Map</h1>
+  <div id="map"></div>
+  <ul id="locations"></ul>
+  <button id="sendDataBtn">Send</button>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Initialize the map
+    const map = L.map('map').setView([51.505, -0.09], 13);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Array to store clicked locations
+    const locations = [];
+
+
+    // Handle map clicks
+    map.on('click', async function(e) {
+      const latLng = e.latlng;
+      const locationList = document.getElementById('locations');
+
+      const name = prompt("Enter a name for this location:");
+
+      // Add a marker for the selected location
+      L.marker(latLng).addTo(map);
+
+      // Update the list of selected locations
+      const li = document.createElement('li');
+      li.textContent = `Name: ${name}, Lat: ${latLng.lat}, Lng: ${latLng.lng}`;
+      locationList.appendChild(li);
+
+      // Add the location to the array
+      locations.push({ lat: latLng.lat, lng: latLng.lng,name });
+    });
+
+    // Send the data to the server when the button is clicked
+    document.getElementById('sendDataBtn').addEventListener('click', function() {
+      fetch('/travel-planner', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(locations)
+      })
+      .then(response => response.json())
+      .then(result => {
+        console.log('Success:', result);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    });
+  </script>
+</body>
+</html>
