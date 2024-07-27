@@ -26,6 +26,7 @@
 
     // Array to store clicked locations
     const locations = [];
+    let sourceNode=null;
 
 
     // Handle map clicks
@@ -45,25 +46,49 @@
 
       // Add the location to the array
       locations.push({ lat: latLng.lat, lng: latLng.lng,name });
+      if (!sourceNode) {
+        const isSource = confirm("Is this the source location?");
+        if (isSource) {
+          sourceNode = { lat: latLng.lat, lng: latLng.lng, name };
+        }
+      }
     });
 
     // Send the data to the server when the button is clicked
     document.getElementById('sendDataBtn').addEventListener('click', function() {
+      if (!sourceNode) {
+        alert("Please select a source location.");
+        return;
+      }
+
+      const data = {
+        source: sourceNode,
+        locations: locations
+      };
+
       fetch('/travel-planner', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(locations)
+        body: JSON.stringify(data)
       })
-      .then(response => response.json())
+      .then(response => {
+        if (response.ok) {
+          return response.json(); 
+        } else {
+          throw new Error('Failed to fetch'); 
+        }
+      })
+
       .then(result => {
-        console.log('Success:', result);
+        window.location.href = 'result.html'; 
       })
+
       .catch(error => {
         console.error('Error:', error);
       });
-    });
+    }); 
   </script>
 </body>
 </html>

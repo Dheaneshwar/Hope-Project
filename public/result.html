@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dijkstra Results</title>
+</head>
+<body>
+  <h1 id="title"></h1>
+  <ul id="results"></ul>
+  <a href="/">Map</a>
+
+  <script>
+    async function fetchResults() {
+      try {
+        const response = await fetch('/result');
+        if (response.ok) {
+          const data = await response.json();
+            console.log(data);
+          // Update the title with the source location
+          document.getElementById('title').textContent = `Shortest Paths from ${data.source}`;
+
+          // Convert shortPaths object into an array for display
+          const resultsList = document.getElementById('results');
+          const shortPathsEntries = Object.entries(data.shortPaths);
+            console.log(shortPathsEntries);
+          resultsList.innerHTML = shortPathsEntries.map(([to, distance]) =>
+            `<li>To ${to}: ${distance} meters</li>`
+          ).join('');
+        } else {
+          console.error('Failed to fetch:', response.statusText);
+          document.getElementById('results').textContent = 'Error fetching results.';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('results').textContent = 'Error fetching results.';
+      }
+    }
+
+    // Fetch results when the page loads
+    fetchResults();
+  </script>
+</body>
+</html>
