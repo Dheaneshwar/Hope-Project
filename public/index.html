@@ -1,17 +1,157 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Travel-planner</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Planner</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
-    #map { height: 400px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      padding: 20px;
+    }
+
+    #map {
+      height: 400px;
+      width: 100%;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 20px 0;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .modal input[type="text"] {
+      width: calc(100% - 22px);
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .modal button {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .modal button:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
-  <h1>Leaflet Map</h1>
-  <div id="map"></div>
-  <ul id="locations"></ul>
-  <button id="sendDataBtn">Send</button>
+  <div class="container">
+    <h1>SELECT THE LOCATIONS</h1>
+    <div id="map"></div>
+    <ul id="locations"></ul>
+    <button id="sendDataBtn">Send</button>
+  </div>
+
+  <!-- Modal -->
+  <div id="locationModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Enter Location Name</h2>
+      <input type="text" id="locationNameInput" placeholder="Location Name">
+      <button id="saveLocationBtn">Save</button>
+    </div>
+  </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
@@ -26,32 +166,42 @@
 
     // Array to store clicked locations
     const locations = [];
-    let sourceNode=null;
-
+    let sourceNode = null;
+    let latLngToSave = null;
 
     // Handle map clicks
-    map.on('click', async function(e) {
-      const latLng = e.latlng;
+    map.on('click', function(e) {
+      latLngToSave = e.latlng;
+      document.getElementById('locationModal').style.display = 'flex';
+    });
+
+    // Close the modal
+    document.querySelector('.close').addEventListener('click', function() {
+      document.getElementById('locationModal').style.display = 'none';
+    });
+
+    // Save location and update list
+    document.getElementById('saveLocationBtn').addEventListener('click', function() {
+      const name = document.getElementById('locationNameInput').value;
+      if (!name) return;
+
       const locationList = document.getElementById('locations');
+      L.marker(latLngToSave).addTo(map);
 
-      const name = prompt("Enter a name for this location:");
-
-      // Add a marker for the selected location
-      L.marker(latLng).addTo(map);
-
-      // Update the list of selected locations
       const li = document.createElement('li');
-      li.textContent = `Name: ${name}, Lat: ${latLng.lat}, Lng: ${latLng.lng}`;
+      li.textContent = `Name: ${name}, Lat: ${latLngToSave.lat}, Lng: ${latLngToSave.lng}`;
       locationList.appendChild(li);
 
-      // Add the location to the array
-      locations.push({ lat: latLng.lat, lng: latLng.lng,name });
+      locations.push({ lat: latLngToSave.lat, lng: latLngToSave.lng, name });
       if (!sourceNode) {
         const isSource = confirm("Is this the source location?");
         if (isSource) {
-          sourceNode = { lat: latLng.lat, lng: latLng.lng, name };
+          sourceNode = { lat: latLngToSave.lat, lng: latLngToSave.lng, name };
         }
       }
+
+      document.getElementById('locationModal').style.display = 'none';
+      document.getElementById('locationNameInput').value = '';
     });
 
     // Send the data to the server when the button is clicked
@@ -80,15 +230,13 @@
           throw new Error('Failed to fetch'); 
         }
       })
-
       .then(result => {
         window.location.href = 'result.html'; 
       })
-
       .catch(error => {
         console.error('Error:', error);
       });
-    }); 
+    });
   </script>
 </body>
 </html>

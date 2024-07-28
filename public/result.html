@@ -1,12 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Dijkstra Results</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Planner Results</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #e9ecef;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #495057;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #343a40;
+      margin-bottom: 20px;
+      text-align: center;
+      text-decoration: underline;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      max-width: 800px;
+      width: 100%;
+      margin: 0;
+    }
+
+    li {
+      background: #ffffff;
+      border: 1px solid #dee2e6;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 1.125rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: box-shadow 0.3s;
+    }
+
+    li:hover {
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 12px 25px;
+      background-color: #007bff;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 50px;
+      font-size: 1.125rem;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    a:hover {
+      background-color: #0056b3;
+      transform: scale(1.05);
+    }
+
+    .section {
+      margin-bottom: 30px;
+      width: 100%;
+      max-width: 800px;
+      padding: 0 15px;
+    }
+
+    .section h2 {
+      font-size: 1.5rem;
+      color: #495057;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #000;
+      padding-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
   <h1 id="title"></h1>
-  <ul id="results"></ul>
-  <a href="/">Map</a>
+  <div class="section">
+    <h2>Shortest Path Using Dijkstra</h2>
+    <ul id="shortPaths"></ul>
+  </div>
+  <div class="section">
+    <h2>Optimistic Route Using Traveling Salesperson</h2>
+    <ul id="tspRoute"></ul>
+  </div>
+  <a href="/">Back to Map</a>
 
   <script>
     async function fetchResults() {
@@ -14,24 +100,36 @@
         const response = await fetch('/result');
         if (response.ok) {
           const data = await response.json();
-            console.log(data);
+          console.log(data);
+          
           // Update the title with the source location
-          document.getElementById('title').textContent = `Shortest Paths from ${data.source}`;
-
-          // Convert shortPaths object into an array for display
-          const resultsList = document.getElementById('results');
+          document.getElementById('title').textContent = `RESULTS`;
+          
+          // Update the shortest paths
+          const shortPathsList = document.getElementById('shortPaths');
           const shortPathsEntries = Object.entries(data.shortPaths);
-            console.log(shortPathsEntries);
-          resultsList.innerHTML = shortPathsEntries.map(([to, distance]) =>
-            `<li>To ${to}: ${distance} meters</li>`
+          shortPathsList.innerHTML = shortPathsEntries.map(([to, distance]) =>
+            `<li>To ${to}: ${distance.toFixed(2)} Km</li>`
           ).join('');
+          
+          // Update the TSP route
+          const tspRouteList = document.getElementById('tspRoute');
+          if (data.tspRoute && data.tspRoute.length > 0) {
+            tspRouteList.innerHTML = data.tspRoute.map(location =>
+              `<li>${location.name} (Lat: ${location.lat.toFixed(6)}, Lng: ${location.lng.toFixed(6)})</li>`
+            ).join('');
+          } else {
+            tspRouteList.innerHTML = '<li>No TSP route available.</li>';
+          }
         } else {
           console.error('Failed to fetch:', response.statusText);
-          document.getElementById('results').textContent = 'Error fetching results.';
+          document.getElementById('shortPaths').textContent = 'Error fetching results.';
+          document.getElementById('tspRoute').textContent = 'Error fetching results.';
         }
       } catch (error) {
         console.error('Error:', error);
-        document.getElementById('results').textContent = 'Error fetching results.';
+        document.getElementById('shortPaths').textContent = 'Error fetching results.';
+        document.getElementById('tspRoute').textContent = 'Error fetching results.';
       }
     }
 

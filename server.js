@@ -5,18 +5,21 @@ const port = 3000;
 app.use(express.static('public'))
 app.use(express.json());
 let result = {};
+let distances={}
 app.post("/travel-planner",async(req, res) => {
   const {source,locations}=req.body;
   console.log(locations);
   
   try {
-    const distances = await getDistanceBetweenLocations(locations);
+    distances = await getDistanceBetweenLocations(locations);
     console.log('Distances:', distances);
 
     const graph = buildGraph(distances);
     const shortPaths = dijkstra(graph, source.name); 
-    result = { source: source.name, shortPaths };
-    console.log(result);
+    const dmap=buildDistanceMap(distances);
+    const tspRoute = findTSPRoute(locations, dmap);
+    result = { source: source.name, shortPaths,tspRoute};
+    console.log('Result:', result);
     res.json(result);
 
   } catch (error) {
@@ -75,7 +78,7 @@ async function getDistanceBetweenLocations(locations) {
         const end = locations[j];
         const s_name=locations[i].name;
         const e_name=locations[j].name;
-        const distance = await fetchDistance(start, end);
+        const distance = await fetchDistance(start, end)/1000;
         if (distance !== null) {
           distances.push({
             from: s_name,
@@ -122,6 +125,74 @@ async function getDistanceBetweenLocations(locations) {
   
     return distances; 
   }
+  
+  //TSP FUNCTION
+  function findTSPRoute(locations, distanceMap) {
+    const route = [];
+    const visited = new Set();
+    console.log("Starting TSP route calculation...");
+  
+    // Helper function to get distance between two locations
+    function getDistance(from, to) {
+      return distanceMap[from]?.[to] || Infinity;
+    }
+  
+    // Start from the first location in the list
+    let current = locations[0];
+    visited.add(current.name);
+    route.push(current);
+  
+    while (visited.size < locations.length) {
+      let nearest = null;
+      let shortestDistance = Infinity;
+  
+      console.log(`Current location: ${current.name}`);
+      console.log(`Visited locations: ${Array.from(visited)}`);
+  
+      for (const loc of locations) {
+        if (!visited.has(loc.name)) {
+          const distance = getDistance(current.name, loc.name);
+          if (distance < shortestDistance) {
+            shortestDistance = distance;
+            nearest = loc;
+          }
+        }
+      }
+  
+      if (nearest) {
+        route.push(nearest);
+        visited.add(nearest.name);
+        current = nearest;
+      } else {
+        console.error("No nearest location found. Possible issue.");
+        break;
+      }
+    }
+  
+    // Return to the start point to complete the cycle
+    if (route.length > 0) {
+      route.push(locations[0]);
+    }
+  
+    console.log("Completed TSP route calculation");
+    return route;
+  }
+  
+
+function buildDistanceMap(distances) {
+  const distanceMap = {};
+  
+  distances.forEach(({ from, to, distance }) => {
+    if (!distanceMap[from]) distanceMap[from] = {};
+    if (!distanceMap[to]) distanceMap[to] = {};
+    distanceMap[from][to] = distance;
+    distanceMap[to][from] = distance; // Assuming it's bidirectional
+  });
+
+  return distanceMap;
+}
+
+
   
   // Priority Queue
   class PriorityQueue {
