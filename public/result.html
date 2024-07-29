@@ -86,6 +86,7 @@
   <h1 id="title"></h1>
   <div class="section">
     <h2>Shortest Path Using Dijkstra</h2>
+    <h3 id="source"></h3>
     <ul id="shortPaths"></ul>
   </div>
   <div class="section">
@@ -104,6 +105,7 @@
           
           // Update the title with the source location
           document.getElementById('title').textContent = `RESULTS`;
+          document.getElementById('source').textContent = `SOURCE:${data.source}`;
           
           // Update the shortest paths
           const shortPathsList = document.getElementById('shortPaths');
